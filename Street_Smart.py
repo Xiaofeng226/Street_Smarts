@@ -1,20 +1,50 @@
-# Install dependencies as needed:
-# pip install kagglehub[pandas-datasets]
-import kagglehub
-from kagglehub import KaggleDatasetAdapter
+import tensorflow as tf
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+import os
 
-# Set the path to the file you'd like to load
-file_path = ""
+# Path to your dataset directory (replace with actual path)
+dataset_dir = r'C:\Users\xiaof\OneDrive\Desktop\CodeTheChange\Street_Smarts\archive\popular_street_foods\dataset'
 
-# Load the latest version
-df = kagglehub.load_dataset(
-  KaggleDatasetAdapter.FILESYSTEM,
-  "nikolasgegenava/popular-street-foods",
-  file_path,
-  # Provide any additional arguments like 
-  # sql_query or pandas_kwargs. See the 
-  # documenation for more information:
-  # https://github.com/Kaggle/kagglehub/blob/main/README.md#kaggledatasetadapterpandas
+# Parameters
+img_height, img_width = 224, 224
+batch_size = 32
+validation_split = 0.2
+
+# Data augmentation and preprocessing for training
+train_datagen = ImageDataGenerator(
+    rescale=1./255,
+    rotation_range=20,
+    zoom_range=0.15,
+    width_shift_range=0.2,
+    height_shift_range=0.2,
+    horizontal_flip=True,
+    validation_split=validation_split
 )
 
-print("First 5 records:", df.head())
+# Only rescale validation data
+val_datagen = ImageDataGenerator(
+    rescale=1./255,
+    validation_split=validation_split
+)
+
+# Training generator
+train_generator = train_datagen.flow_from_directory(
+    dataset_dir,
+    target_size=(img_height, img_width),
+    batch_size=batch_size,
+    class_mode='categorical',
+    subset='training',
+    shuffle=True
+)
+
+# Validation generator
+validation_generator = val_datagen.flow_from_directory(
+    dataset_dir,
+    target_size=(img_height, img_width),
+    batch_size=batch_size,
+    class_mode='categorical',
+    subset='validation',
+    shuffle=False
+)
+
+print("Classes found:", train_generator.class_indices)
